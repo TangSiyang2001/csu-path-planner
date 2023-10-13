@@ -51,6 +51,14 @@ class Algorithm {
                              float* dubinsLookup,
                              Visualize& visualization);
 
+   static Node2D* plainAstar(const Node3D& start, 
+                    const Node3D& goal, 
+                    Node2D* nodes2D, 
+                    int width, 
+                    int height,
+                    CollisionDetection& configurationSpace,
+                    Visualize& visualization);
 };
+
 }
 #endif // ALGORITHM_H

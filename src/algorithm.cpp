@@ -4,7 +4,21 @@
 
 using namespace HybridAStar;
 
-float aStar(Node2D& start, Node2D& goal, Node2D* nodes2D, int width, int height, CollisionDetection& configurationSpace, Visualize& visualization);
+float aStar(Node2D& start,
+            Node2D& goal,
+            Node2D* nodes2D,
+            int width,
+            int height,
+            CollisionDetection& configurationSpace,
+            Visualize& visualization, bool visualize2D = false);
+Node2D* aStar_(Node2D& start,
+            Node2D& goal,
+            Node2D* nodes2D,
+            int width,
+            int height,
+            CollisionDetection& configurationSpace,
+            Visualize& visualization, bool visualize2D = false);
+
 void updateH(Node3D& start, const Node3D& goal, Node2D* nodes2D, float* dubinsLookup, int width, int height, CollisionDetection& configurationSpace, Visualize& visualization);
 Node3D* dubinsShot(Node3D& start, const Node3D& goal, CollisionDetection& configurationSpace);
 
@@ -231,16 +245,30 @@ Node3D* Algorithm::hybridAStar(Node3D& start,
   return nullptr;
 }
 
+Node2D* Algorithm::plainAstar(const Node3D& start, 
+                    const Node3D& goal, 
+                    Node2D* nodes2D, 
+                    int width, 
+                    int height,
+                    CollisionDetection& configurationSpace,
+                    Visualize& visualization) {
+    // create a 2d start node
+    Node2D start2d(start.getX(), start.getY(), 0, 0, nullptr);
+    // create a 2d goal node
+    Node2D goal2d(goal.getX(), goal.getY(), 0, 0, nullptr);
+    return aStar_(start2d, goal2d, nodes2D, width, height, configurationSpace, visualization, true);
+}
+
 //###################################################
 //                                        2D A*
 //###################################################
-float aStar(Node2D& start,
+Node2D* aStar_(Node2D& start,
             Node2D& goal,
             Node2D* nodes2D,
             int width,
             int height,
             CollisionDetection& configurationSpace,
-            Visualize& visualization) {
+            Visualize& visualization, bool isVisualize2D) {
 
   // PREDECESSOR AND SUCCESSOR INDEX
   int iPred, iSucc;
@@ -292,7 +320,7 @@ float aStar(Node2D& start,
       nodes2D[iPred].discover();
 
       // RViz visualization
-      if (Constants::visualization2D) {
+      if (isVisualize2D && Constants::visualization2D) {
         visualization.publishNode2DPoses(*nPred);
         visualization.publishNode2DPose(*nPred);
         //        d.sleep();
@@ -304,7 +332,7 @@ float aStar(Node2D& start,
       // _________
       // GOAL TEST
       if (*nPred == goal) {
-        return nPred->getG();
+        return nPred;
       }
       // ____________________
       // CONTINUE WITH SEARCH
@@ -332,6 +360,7 @@ float aStar(Node2D& start,
               // put successor on open list
               nSucc->open();
               nodes2D[iSucc] = *nSucc;
+              nodes2D[iSucc].setPred(&nodes2D[iPred]);
               O.push(&nodes2D[iSucc]);
               delete nSucc;
             } else { delete nSucc; }
@@ -341,8 +370,21 @@ float aStar(Node2D& start,
     }
   }
 
-  // return large number to guide search away
-  return 1000;
+  return nullptr;
+}
+
+float aStar(Node2D& start,
+            Node2D& goal,
+            Node2D* nodes2D,
+            int width,
+            int height,
+            CollisionDetection& configurationSpace,
+            Visualize& visualization, bool isVisualize2D) {
+  auto* res = aStar_(start, goal, nodes2D, width, height, configurationSpace, visualization, isVisualize2D);
+  if(!res) {
+    return 1000;
+  }
+  return res->getG();
 }
 
 //###################################################
@@ -439,7 +481,7 @@ void updateH(Node3D& start, const Node3D& goal, Node2D* nodes2D, float* dubinsLo
     // create a 2d goal node
     Node2D goal2d(goal.getX(), goal.getY(), 0, 0, nullptr);
     // run 2d astar and return the cost of the cheapest path for that node
-    nodes2D[(int)start.getY() * width + (int)start.getX()].setG(aStar(goal2d, start2d, nodes2D, width, height, configurationSpace, visualization));
+    nodes2D[(int)start.getY() * width + (int)start.getX()].setG(aStar(goal2d, start2d, nodes2D, width, height, configurationSpace, visualization, false));
     //    ros::Time t1 = ros::Time::now();
     //    ros::Duration d(t1 - t0);
     //    std::cout << "calculated 2D Heuristic in ms: " << d * 1000 << std::endl;

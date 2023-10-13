@@ -1,4 +1,5 @@
 #include "planner.h"
+#include <iostream>
 
 using namespace HybridAStar;
 //###################################################
@@ -154,6 +155,7 @@ void Planner::plan() {
 
     // ___________________________
     // LISTS ALLOWCATED ROW MAJOR ORDER
+    // note(tsy): grid means the map
     int width = grid->info.width;
     int height = grid->info.height;
     int depth = Constants::headings;
@@ -161,6 +163,7 @@ void Planner::plan() {
     // define list pointers and initialize lists
     Node3D* nodes3D = new Node3D[length]();
     Node2D* nodes2D = new Node2D[width * height]();
+    Node2D* nodes2DCopy = new Node2D[width * height]();
 
     // ________________________
     // retrieving goal position
@@ -186,6 +189,7 @@ void Planner::plan() {
     // ___________
     // DEBUG START
     //    Node3D nStart(108.291, 30.1081, 0, 0, 0, nullptr);
+    ros::Time astarStarTime = ros::Time::now();
 
 
     // ___________________________
@@ -197,6 +201,29 @@ void Planner::plan() {
     // CLEAR THE PATH
     path.clear();
     smoothedPath.clear();
+    std::cout << "hey-1";
+    dPath.clear();
+    std::cout << "hey0";
+    Node2D* nd = Algorithm::plainAstar(nStart, nGoal, nodes2DCopy, width, height, configurationSpace, visualization);
+    std::cout << "hey";
+    std::vector<Node3D> pth;
+    
+    Node2D* iter = nd;
+    while (iter)
+    {
+      Node3D node = Node3D(iter->getX(), iter->getY(), 0, 0, 0, nullptr);
+      pth.push_back(node);
+      iter = iter->getPred();
+    }
+    std::reverse(pth.begin(), pth.end());
+    
+    std::cout << "hey2";
+    dPath.updatePath(pth);
+    std::cout << "hey3";
+    dPath.publishPath();
+    dPath.publishPathNodes();
+    dPath.publishPathVehicles();
+
     // FIND THE PATH
     Node3D* nSolution = Algorithm::hybridAStar(nStart, nGoal, nodes3D, nodes2D, width, height, configurationSpace, dubinsLookup, visualization);
     // TRACE THE PATH
@@ -221,11 +248,9 @@ void Planner::plan() {
     smoothedPath.publishPathVehicles();
     visualization.publishNode3DCosts(nodes3D, width, height, depth);
     visualization.publishNode2DCosts(nodes2D, width, height);
-
-
-
     delete [] nodes3D;
     delete [] nodes2D;
+    delete [] nodes2DCopy;
 
   } else {
     std::cout << "missing goal or start" << std::endl;

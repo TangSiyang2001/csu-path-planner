@@ -2,6 +2,9 @@
 #define NODE2D_H
 
 #include <cmath>
+#include <vector>
+#include <algorithm>
+#include "node3d.h"
 
 #include "constants.h"
 namespace HybridAStar {
@@ -90,6 +93,25 @@ class Node2D {
   // SUCCESSOR CREATION
   /// Creates a successor on a eight-connected grid.
   Node2D* createSuccessor(const int i);
+
+  std::vector<Node3D> getPath() {
+    std::vector<Node3D> nodes;
+    addNode3D(this, &nodes);
+    Node2D* node = this;
+    while(node->getPred()) {
+      addNode3D(node->getPred(), &nodes);
+      node = node->getPred();
+    }
+    std::reverse(nodes.begin(), nodes.end());
+    return nodes;
+  }
+
+  void addNode3D(Node2D* node2D, std::vector<Node3D>* node3Ds) {
+    if (!node2D || !node3Ds) {
+      return;
+    }
+    node3Ds->push_back(Node3D(node2D->getX(), node2D->getY(), 0, 0, 0, nullptr));
+  }
 
   // CONSTANT VALUES
   /// Number of possible directions

@@ -84,9 +84,7 @@ void Node3D::updateG() {
     } else {
       g += dx[0];
     }
-  }
-  // reverse driving
-  else {
+  } /*reverse driving*/ else {
     // penalize turning and reversing
     if (pred->prim != prim) {
       // penalize change of direction

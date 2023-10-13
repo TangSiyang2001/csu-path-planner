@@ -83,6 +83,7 @@ class Planner {
   Smoother smoother;
   /// The path smoothed and ready for the controller
   Path smoothedPath = Path(true);
+  Path dPath = Path(false, true);
   /// The visualization used for search visualization
   Visualize visualization;
   /// The collission detection for testing specific configurations
